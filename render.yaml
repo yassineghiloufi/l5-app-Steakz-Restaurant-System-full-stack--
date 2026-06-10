@@ -5,8 +5,8 @@ services:
     region: oregon
     plan: starter
     branch: main
-    buildCommand: "npm ci && npm run build && npx prisma generate"
-    startCommand: "npm run start"
+    buildCommand: "npm ci && npm --workspace backend run build"
+    startCommand: "npm --workspace backend run start"
     envVars:
       - key: DATABASE_URL
         fromDatabase: false

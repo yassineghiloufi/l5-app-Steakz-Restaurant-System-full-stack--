@@ -26,3 +26,8 @@ Enterprise-grade Restaurant Management Information System for Steakz.
 - The backend follows MVC architecture with separate `routes`, `controllers`, `services`, and `middleware`.
 - Role-based access control is enforced via JWT and role middleware.
 - API responses follow the specified success/error standard.
+
+## Deployment
+- `backend` is prepared for Render with `backend/package.json` build/start scripts.
+- `frontend` is ready for Vercel; set `VITE_API_URL` to the deployed Render backend URL.
+- Use `render.yaml` to define Render service settings and `frontend/vercel.json` for Vercel SPA routing.

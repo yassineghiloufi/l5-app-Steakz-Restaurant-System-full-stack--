@@ -8,8 +8,8 @@ Overview
 Backend (Render)
 1. Create a new Web Service in Render and connect your GitHub repo branch (e.g., `main`).
 2. In Render service settings set:
-   - Build Command: `npm ci && npm run build && npx prisma generate`
-   - Start Command: `npm run start`
+   - Build Command: `npm ci && npm --workspace backend run build`
+   - Start Command: `npm --workspace backend run start`
    - Environment: Node
 3. Set environment variables on Render:
    - `DATABASE_URL` = (Neon pooled connection string)
