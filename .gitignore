@@ -1,0 +1,9 @@
+node_modules
+dist
+.env
+**/node_modules
+**/.DS_Store
+/vite-env.d.ts
+/frontend/dist
+/backend/node_modules
+/backend/dist

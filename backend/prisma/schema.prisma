@@ -1,0 +1,354 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Chain {
+  id          String       @id @default(cuid())
+  name        String       @unique
+  code        String       @unique
+  description String?
+  branches    Branch[]
+  departments Department[]
+  users       User[]
+  customers   Customer[]
+  marketingCampaigns MarketingCampaign[]
+  settings    Setting[]
+  suppliers   Supplier[]
+  menuItems   MenuItem[]
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+}
+
+model Branch {
+  id          String          @id @default(cuid())
+  chain       Chain           @relation(fields: [chainId], references: [id])
+  chainId     String
+  name        String
+  code        String          @unique
+  region      String?
+  address     String?
+  departments Department[]
+  users       UserBranch[]
+  orders      Order[]
+  reservations Reservation[]
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+
+  @@index([chainId])
+}
+
+model Department {
+  id          String          @id @default(cuid())
+  chain       Chain           @relation(fields: [chainId], references: [id])
+  chainId     String
+  branch      Branch?         @relation(fields: [branchId], references: [id])
+  branchId    String?
+  name        String
+  code        String?         @unique
+  users       UserDepartment[]
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+
+  @@index([chainId])
+  @@index([branchId])
+}
+
+model Role {
+  id          String           @id @default(cuid())
+  name        String           @unique
+  description String?
+  isSystem    Boolean          @default(false)
+  permissions RolePermission[]
+  userRoles   UserRole[]
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+}
+
+model Permission {
+  id          String           @id @default(cuid())
+  name        String           @unique
+  description String?
+  group       String?
+  roles       RolePermission[]
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+}
+
+model RolePermission {
+  role        Role       @relation(fields: [roleId], references: [id])
+  roleId      String
+  permission  Permission @relation(fields: [permissionId], references: [id])
+  permissionId String
+  createdAt   DateTime   @default(now())
+
+  @@id([roleId, permissionId])
+  @@index([permissionId])
+}
+
+model UserRole {
+  user         User    @relation(fields: [userId], references: [id])
+  userId       String
+  role         Role    @relation(fields: [roleId], references: [id])
+  roleId       String
+  assignedBy   User?   @relation("AssignedBy", fields: [assignedById], references: [id])
+  assignedById String?
+  assignedAt   DateTime @default(now())
+
+  @@id([userId, roleId])
+  @@index([roleId])
+}
+
+model UserBranch {
+  user      User   @relation(fields: [userId], references: [id])
+  userId    String
+  branch    Branch @relation(fields: [branchId], references: [id])
+  branchId  String
+  assignedAt DateTime @default(now())
+
+  @@id([userId, branchId])
+  @@index([branchId])
+}
+
+model UserDepartment {
+  user        User       @relation(fields: [userId], references: [id])
+  userId      String
+  department  Department @relation(fields: [departmentId], references: [id])
+  departmentId String
+  assignedAt  DateTime   @default(now())
+
+  @@id([userId, departmentId])
+  @@index([departmentId])
+}
+
+model AuditLog {
+  id         String   @id @default(cuid())
+  user       User?    @relation(fields: [userId], references: [id])
+  userId     String?
+  action     String
+  resource   String?
+  details    Json?
+  ip         String?
+  userAgent  String?
+  createdAt  DateTime @default(now())
+}
+
+model LoginHistory {
+  id         String   @id @default(cuid())
+  user       User?    @relation(fields: [userId], references: [id])
+  userId     String?
+  email      String
+  ip         String?
+  userAgent  String?
+  success    Boolean
+  createdAt  DateTime @default(now())
+}
+
+model RoleChangeHistory {
+  id          String   @id @default(cuid())
+  user        User     @relation(fields: [userId], references: [id])
+  userId      String
+  changedBy   User?    @relation("RoleChangedBy", fields: [changedById], references: [id])
+  changedById String?
+  oldRole     String?
+  newRole     String?
+  reason      String?
+  createdAt   DateTime @default(now())
+}
+
+model User {
+  id              String             @id @default(cuid())
+  name            String
+  email           String             @unique
+  password        String
+  primaryRole     String             @default("EMPLOYEE")
+  chain           Chain              @relation(fields: [chainId], references: [id])
+  chainId         String
+  roles           UserRole[]
+  branches        UserBranch[]
+  departments     UserDepartment[]
+  loginHistory    LoginHistory[]
+  auditLogs       AuditLog[]
+  roleChanges     RoleChangeHistory[]
+  assignedRoles   UserRole[]         @relation("AssignedBy")
+  assignedTasks   Task[]             @relation("AssignedTasks")
+  ordersTaken     Order[]            @relation("OrderTakenBy")
+  payrollRecords  PayrollRecord[]
+  roleChangeEvents RoleChangeHistory[] @relation("RoleChangedBy")
+  createdAt       DateTime           @default(now())
+  updatedAt       DateTime           @updatedAt
+
+  @@index([chainId])
+}
+
+model Inventory {
+  id           String   @id @default(cuid())
+  itemName     String
+  quantity     Int
+  supplier     String
+  minimumStock Int
+  updatedAt    DateTime @updatedAt
+}
+
+model Sale {
+  id        String   @id @default(cuid())
+  amount    Float
+  saleDate  DateTime
+  createdAt DateTime @default(now())
+}
+
+model Customer {
+  id            String          @id @default(cuid())
+  chain         Chain           @relation(fields: [chainId], references: [id])
+  chainId       String
+  name          String
+  email         String          @unique
+  phone         String?
+  loyaltyPoints Int             @default(0)
+  orders        Order[]
+  reservations  Reservation[] @relation("CustomerReservations")
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
+
+  @@index([chainId])
+}
+
+model Order {
+  id         String      @id @default(cuid())
+  branch     Branch      @relation(fields: [branchId], references: [id])
+  branchId   String
+  customer   Customer?   @relation(fields: [customerId], references: [id])
+  customerId String?
+  takenBy    User?       @relation("OrderTakenBy", fields: [takenById], references: [id])
+  takenById  String?
+  status     String      @default("PENDING")
+  total      Float
+  isRefunded Boolean     @default(false)
+  items      OrderItem[]
+  createdAt  DateTime    @default(now())
+  updatedAt  DateTime    @updatedAt
+
+  @@index([branchId])
+  @@index([customerId])
+}
+
+model MenuItem {
+  id          String    @id @default(cuid())
+  chain       Chain     @relation(fields: [chainId], references: [id])
+  chainId     String
+  name        String
+  description String?
+  category    String?
+  price       Float
+  orderItems  OrderItem[]
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@index([chainId])
+}
+
+model OrderItem {
+  id          String   @id @default(cuid())
+  order       Order    @relation(fields: [orderId], references: [id])
+  orderId     String
+  menuItem    MenuItem @relation(fields: [menuItemId], references: [id])
+  menuItemId  String
+  quantity    Int      @default(1)
+  unitPrice   Float
+  total       Float
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([orderId])
+  @@index([menuItemId])
+}
+
+model Reservation {
+  id              String   @id @default(cuid())
+  branch          Branch   @relation(fields: [branchId], references: [id])
+  branchId        String
+  customer        Customer? @relation("CustomerReservations", fields: [customerId], references: [id])
+  customerId      String?
+  guestName       String
+  partySize       Int
+  reservationTime DateTime
+  status          String   @default("PENDING")
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([branchId])
+}
+
+model MarketingCampaign {
+  id        String   @id @default(cuid())
+  chain     Chain    @relation(fields: [chainId], references: [id])
+  chainId   String
+  title     String
+  channel   String
+  budget    Float
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([chainId])
+}
+
+model Setting {
+  id        String   @id @default(cuid())
+  chain     Chain?   @relation(fields: [chainId], references: [id])
+  chainId   String?
+  key       String
+  value     String
+  enabled   Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model PayrollRecord {
+  id          String   @id @default(cuid())
+  user        User     @relation(fields: [userId], references: [id])
+  userId      String
+  amount      Float
+  periodStart DateTime
+  periodEnd   DateTime
+  processed   Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([userId])
+}
+
+model Supplier {
+  id        String   @id @default(cuid())
+  chain     Chain    @relation(fields: [chainId], references: [id])
+  chainId   String
+  name      String
+  contact   String
+  phone     String?
+  address   String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([chainId])
+}
+
+model Task {
+  id           String   @id @default(cuid())
+  title        String
+  description  String
+  assignedTo   User     @relation("AssignedTasks", fields: [assignedToId], references: [id])
+  assignedToId String
+  status       TaskStatus @default(PENDING)
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+}
+
+enum TaskStatus {
+  PENDING
+  IN_PROGRESS
+  COMPLETED
+}
