@@ -16,10 +16,10 @@ import errorHandler from './middleware/errorHandler';
 
 const app = express();
 
-const allowedOrigin = process.env.FRONTEND_URL || 'http://localhost:5174';
+const frontendUrl = process.env.FRONTEND_URL;
 app.use(
 	cors({
-		origin: allowedOrigin,
+		origin: frontendUrl ? frontendUrl : true,
 		credentials: true,
 	}),
 );
